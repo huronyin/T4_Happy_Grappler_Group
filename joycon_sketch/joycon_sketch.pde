@@ -82,10 +82,18 @@ FBox              door2;
 FRevoluteJoint    joint1;
 FCircle           ball;
 
+/* joycon spring parameter  */
+float             kSpring                             = 80;
+PVector           fSpring                             = new PVector(0, 0);
+PVector           xSpring                             = new PVector(0, 0.1);
+PVector           deltaXSpring                        = new PVector(0, 0);
+float             time                                = 0;
+
 
 /* Initialization of virtual tool */
 HVirtualCoupling  s;
 PImage            haplyAvatar;
+PVector           posAvatar;
 
 /* end elements definition *********************************************************************************************/ 
 
@@ -109,7 +117,7 @@ void setup(){
    *      linux:        haplyBoard = new Board(this, "/dev/ttyUSB0", 0);
    *      mac:          haplyBoard = new Board(this, "/dev/cu.usbmodem1411", 0);
    */ 
-  haplyBoard          = new Board(this, "COM3", 0);
+  haplyBoard          = new Board(this, "COM5", 0);
   widgetOne           = new Device(widgetOneID, haplyBoard);
   pantograph          = new Pantograph();
   
@@ -178,16 +186,18 @@ void setup(){
   
     
   /* creation of ball */
+  /*
   ball                   = new FCircle(1.5);
   ball.setPosition(edgeTopLeftX+worldWidth/2.0, edgeTopLeftY+2*worldHeight/3.0);
   ball.setStatic(false);
   ball.setFill(0, 0, 0);
   world.add(ball);
+  */
     
   /* Haptic Tool Initialization */
   s                   = new HVirtualCoupling((1)); 
   s.h_avatar.setDensity(4);  
-  s.init(world, edgeTopLeftX+worldWidth/2+6.0, edgeTopLeftY+2*worldHeight/2.0); 
+  s.init(world, edgeTopLeftX+worldWidth/2.0, edgeTopLeftY+2*worldHeight/3.0); 
  
   
   /* If you are developing on a Mac users must update the path below 
@@ -246,15 +256,22 @@ class SimulationThread implements Runnable{
     
       angles.set(widgetOne.get_device_angles()); 
       posEE.set(widgetOne.get_device_position(angles.array()));
-      posEE.set(posEE.copy().mult(200));  
+      //print(posEE);
+      //print("\n");
+      //posEE.set(posEE.copy().mult(200));  
     }
     
-    s.setToolPosition(edgeTopLeftX+worldWidth/2-(posEE).x, edgeTopLeftY+(posEE).y-7); 
+    //s.setToolPosition(edgeTopLeftX+worldWidth/2-(posEE).x, edgeTopLeftY+(posEE).y-7); 
     
+    //s.updateCouplingForce();
+    //fEE.set(-s.getVirtualCouplingForceX(), s.getVirtualCouplingForceY());
+    //fEE.div(100000); //dynes to newtons
     
-    s.updateCouplingForce();
-    fEE.set(-s.getVirtualCouplingForceX(), s.getVirtualCouplingForceY());
-    fEE.div(100000); //dynes to newtons
+    fSpring.set(0, 0);
+    deltaXSpring = posEE.sub(xSpring);
+    fSpring = fSpring.add(deltaXSpring.mult(-kSpring));
+    
+    fEE = (fSpring.copy());
     
     torques.set(widgetOne.set_device_torques(fEE.array()));
     widgetOne.device_write_torques();
