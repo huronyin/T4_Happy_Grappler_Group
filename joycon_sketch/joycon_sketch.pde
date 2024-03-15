@@ -99,6 +99,7 @@ PImage            haplyAvatar;
 PVector           posAvatar                           = new PVector(0, 0);
 float             movementSpeed = 5.0e1;
 ArrayList<FContact>         contactList                         = null;
+float             reactionMult = 2;
 
 /* end elements definition *********************************************************************************************/ 
 
@@ -284,19 +285,20 @@ class SimulationThread implements Runnable{
     //posAvatar = posAvatar.add(deltaXSpring.copy().mult(movementSpeed));
     //print(sh_avatar.getForceY()*1000);
     
-    contactList = sh_avatar.getContacts();
-    if(!contactList.isEmpty())
-    {
-      print(contactList.get(0).getVelocityY());
-      print("\n");
-    }
+    
     //s.setToolPosition(posAvatar.x,posAvatar.y);
     
     // calculate restoring joycon force
     fSpring.set(0, 0);
     fSpring = fSpring.add(deltaXSpring.mult(-kSpring));
-    
     fEE = (fSpring.copy());
+    
+    // calculate collision reaction forces
+    contactList = sh_avatar.getContacts();
+    for(int i=0;i<contactList.size();i++)
+    {
+      fEE.add(contactList.get(i).getVelocityX() * reactionMult, -contactList.get(i).getVelocityY() * reactionMult);
+    }
     
     torques.set(widgetOne.set_device_torques(fEE.array()));
     widgetOne.device_write_torques();
