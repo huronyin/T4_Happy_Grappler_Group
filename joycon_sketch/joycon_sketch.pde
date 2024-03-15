@@ -18,6 +18,8 @@
 import processing.serial.*;
 import static java.util.concurrent.TimeUnit.*;
 import java.util.concurrent.*;
+import java.util.*;
+import java.lang.*;
 /* end library imports *************************************************************************************************/  
 
 
@@ -81,9 +83,10 @@ FBox              door1;
 FBox              door2;
 FRevoluteJoint    joint1;
 FCircle           ball;
+FCircle           sh_avatar;
 
 /* joycon spring parameter  */
-float             kSpring                             = 80;
+float             kSpring                             = 110;
 PVector           fSpring                             = new PVector(0, 0);
 PVector           xSpring                             = new PVector(0, 0.1);
 PVector           deltaXSpring                        = new PVector(0, 0);
@@ -91,9 +94,11 @@ float             time                                = 0;
 
 
 /* Initialization of virtual tool */
-HVirtualCoupling  s;
+//HVirtualCoupling  s;
 PImage            haplyAvatar;
-PVector           posAvatar;
+PVector           posAvatar                           = new PVector(0, 0);
+float             movementSpeed = 5.0e1;
+ArrayList<FContact>         contactList                         = null;
 
 /* end elements definition *********************************************************************************************/ 
 
@@ -195,9 +200,13 @@ void setup(){
   */
     
   /* Haptic Tool Initialization */
-  s                   = new HVirtualCoupling((1)); 
-  s.h_avatar.setDensity(4);  
-  s.init(world, edgeTopLeftX+worldWidth/2.0, edgeTopLeftY+2*worldHeight/3.0); 
+  //s                   = new HVirtualCoupling((1)); 
+  sh_avatar = new FCircle(1);
+  sh_avatar.setDensity(4);  
+  sh_avatar.setPosition(edgeTopLeftX+worldWidth/2.0, edgeTopLeftY+2*worldHeight/7.0); 
+  sh_avatar.setHaptic(true, 1000, 1);
+  world.add(sh_avatar);
+  //posAvatar.set(edgeTopLeftX+worldWidth/2.0, edgeTopLeftY+2*worldHeight/6.0);
  
   
   /* If you are developing on a Mac users must update the path below 
@@ -205,11 +214,11 @@ void setup(){
    */
   haplyAvatar = loadImage("../img/smile.png"); 
   haplyAvatar.resize((int)(hAPI_Fisica.worldToScreen(1)), (int)(hAPI_Fisica.worldToScreen(1)));
-  s.h_avatar.attachImage(haplyAvatar); 
+  sh_avatar.attachImage(haplyAvatar); 
 
 
   /* world conditions setup */
-  world.setGravity((0.0), (1000.0)); //1000 cm/(s^2)
+  world.setGravity((0.0), (0.0)); //1000 cm/(s^2)
   world.setEdges((edgeTopLeftX), (edgeTopLeftY), (edgeBottomRightX), (edgeBottomRightY)); 
   world.setEdgesRestitution(.4);
   world.setEdgesFriction(0.5);
@@ -267,8 +276,24 @@ class SimulationThread implements Runnable{
     //fEE.set(-s.getVirtualCouplingForceX(), s.getVirtualCouplingForceY());
     //fEE.div(100000); //dynes to newtons
     
-    fSpring.set(0, 0);
+    // calculate deltaXSpring
     deltaXSpring = posEE.sub(xSpring);
+    
+    // move avatar based on deltaXSpring
+    sh_avatar.setVelocity(-deltaXSpring.x * movementSpeed, deltaXSpring.y * movementSpeed);
+    //posAvatar = posAvatar.add(deltaXSpring.copy().mult(movementSpeed));
+    //print(sh_avatar.getForceY()*1000);
+    
+    contactList = sh_avatar.getContacts();
+    if(!contactList.isEmpty())
+    {
+      print(contactList.get(0).getVelocityY());
+      print("\n");
+    }
+    //s.setToolPosition(posAvatar.x,posAvatar.y);
+    
+    // calculate restoring joycon force
+    fSpring.set(0, 0);
     fSpring = fSpring.add(deltaXSpring.mult(-kSpring));
     
     fEE = (fSpring.copy());
