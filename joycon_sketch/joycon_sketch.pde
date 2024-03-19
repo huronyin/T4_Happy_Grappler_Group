@@ -44,7 +44,7 @@ float             pixelsPerCentimeter                 = 40.0;
 /* World boundaries in centimeters */
 FWorld            world;
 float             worldWidth                          = 25.0;  
-float             worldHeight                         = 10.0; 
+float             worldHeight                         = 25.0; 
 float             edgeTopLeftX                        = 0.0; 
 float             edgeTopLeftY                        = 0.0; 
 float             edgeBottomRightX                    = worldWidth; 
@@ -74,7 +74,7 @@ void setup(){
   /* put setup code here, run once: */
   
   /* screen size definition */
-  size(1000, 400);
+  size(1000, 1000);
   
   /* device setup */
   
@@ -103,35 +103,14 @@ void setup(){
   
   /* creation of wall */
   wall                   = new FBox(10.0, 0.5);
-  wall.setPosition(edgeTopLeftX+worldWidth/2.0 - 1, edgeTopLeftY+2*worldHeight/3.0 - 0.3);
+  wall.setPosition(edgeTopLeftX+worldWidth/2.0, edgeTopLeftY+2*worldHeight/3.0);
   wall.setStatic(true);
   wall.setFill(0, 0, 0);
   world.add(wall);
-
-  /* creation of wall2 */
-  wall2                   = new FBox(10.0, 0.5);
-  wall2.setPosition(edgeTopLeftX+worldWidth/2.0 - 3, edgeTopLeftY+2*worldHeight/3.0 - 3);
-  wall2.setStatic(true);
-  wall2.setFill(0, 0, 0);
-  world.add(wall2);
-  
-  /* creation of wall3 */
-  wall3                   = new FBox(0.5, 7.0);
-  wall3.setPosition(edgeTopLeftX+worldWidth/2.0 - 8, edgeTopLeftY+2*worldHeight/3.0 - 0.5);
-  wall3.setStatic(true);
-  wall3.setFill(0, 0, 0);
-  world.add(wall3);  
-  
-  /* creation of wall4 */
-  wall4                   = new FBox(0.5, 7.0);
-  wall4.setPosition(edgeTopLeftX+worldWidth/2.0 + 4, edgeTopLeftY+2*worldHeight/3.0 - 0.5);
-  wall4.setStatic(true);
-  wall4.setFill(0, 0, 0);
-  world.add(wall4);  
  
   /* world conditions setup */
   world.setGravity((0.0), (0.0)); //1000 cm/(s^2)
-  world.setEdges((edgeTopLeftX), (edgeTopLeftY), (edgeBottomRightX), (edgeBottomRightY)); 
+  world.setEdges((edgeTopLeftX), (edgeTopLeftY), (edgeBottomRightX), (edgeBottomRightY),color(255,0,0)); 
   world.setEdgesRestitution(.4);
   world.setEdgesFriction(0.5);
   
@@ -215,7 +194,7 @@ public class HaplyAvatar{
     FCircle           sh_avatar;
 
     /* Virtual avatar parameters */
-    float             movementSpeed = 5.0e1;
+    float             movementSpeed = 1.0e2;
     float             reactionMult = 2;
 
     /* initializing virtual avatar variables */
@@ -243,14 +222,14 @@ public class HaplyAvatar{
         widget.add_encoder(2, CCW, 12, 4880, 1);
         widget.device_set_parameters();
 
-        sh_avatar = new FCircle(1);
+        sh_avatar = new FCircle(1.8);
         sh_avatar.setDensity(4);  
         sh_avatar.setPosition(edgeTopLeftX+worldWidth/2.0, edgeTopLeftY+2*worldHeight/7.0); 
         sh_avatar.setHaptic(true, 1000, 1);
         world.add(sh_avatar);
 
         haplyAvatar = loadImage("../img/smile.png"); 
-        haplyAvatar.resize((int)(hAPI_Fisica.worldToScreen(1)), (int)(hAPI_Fisica.worldToScreen(1)));
+        haplyAvatar.resize((int)(hAPI_Fisica.worldToScreen(1.8)), (int)(hAPI_Fisica.worldToScreen(1.8)));
         sh_avatar.attachImage(haplyAvatar); 
     }
 
