@@ -53,13 +53,6 @@ float             edgeBottomRightY                    = worldHeight;
 
 /* Initialization of walls */
 FBox              wall;
-FBox              wall2;
-FBox              wall3;
-FBox              wall4;
-FBox              door1;
-FBox              door2;
-FRevoluteJoint    joint1;
-FCircle           ball;
 
 /* Initialization of avatars */
 HaplyAvatar       avatar1;
@@ -106,6 +99,7 @@ void setup(){
   wall.setPosition(edgeTopLeftX+worldWidth/2.0, edgeTopLeftY+2*worldHeight/3.0);
   wall.setStatic(true);
   wall.setFill(0, 0, 0);
+  //wall.setRestitution(1.0f);
   world.add(wall);
  
   /* world conditions setup */
