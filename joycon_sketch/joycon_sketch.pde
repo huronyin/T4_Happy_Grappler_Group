@@ -59,6 +59,10 @@ FBox              wall;
 HaplyAvatar       avatar1;
 HaplyAvatar       avatar2;
 
+/* Minigame stuff */
+PFont f;
+float pathWidth = 20; // Adjust the width of the path as desired
+
 /* end elements definition *********************************************************************************************/ 
 
 
@@ -111,9 +115,11 @@ void setup(){
   
   world.draw();
   
-  
   /* setup framerate speed */
   frameRate(baseFrameRate);
+
+  /* Minigame setup */
+  f                   = createFont("Arial", 16, true);
   
 
   /* setup simulation thread to run at 1kHz */ 
@@ -133,7 +139,28 @@ void draw(){
       world.draw();
     }
     else{
-      background(0);
+      background(10); 
+      textFont(f, 50);
+      fill(0, 150, 100);
+      textAlign(CENTER);
+      avatar1.minigame_drawEE();
+      avatar2.minigame_drawEE();
+      avatar1.minigame_drawUntravelledPath();
+      avatar2.minigame_drawUntravelledPath();
+      avatar1.minigame_drawTravelledPath();
+      avatar2.minigame_drawTravelledPath();
+      /*
+      if(gameCompleted){
+        if(avatar.totalDistance>avatar2.totalDistance){
+          text("Player1 won! ", width/2, height/2);
+        }
+        else if(totalDistance < totalDistance2){
+          text("Player2 won! ", width/2, height/2);
+        }
+        else{
+          text("It's a tie! ", width/2, height/2);
+        }
+      }*/
     }
   }
 }
@@ -153,6 +180,17 @@ class SimulationThread implements Runnable{
       avatar2.run();
       world.step(1.0f/1000.0f);
     }
+
+    else{
+      avatar1.minigame_getHaplyData();
+      avatar2.minigame_getHaplyData();
+
+      avatar1.minigame_pathTrackingStateUpdate();
+      avatar2.minigame_pathTrackingStateUpdate();
+
+      avatar1.minigame_renderForce();
+      avatar2.minigame_renderForce();
+    }
   
     renderingForce = false;
   }
@@ -164,8 +202,6 @@ void keyPressed() {
     isMinigame = !isMinigame;
   }
 }
-
-/* helper functions section, place helper functions here ***************************************************************/
 
 public class HaplyAvatar{
     /* device block definitions ********************************************************************************************/
@@ -215,6 +251,8 @@ public class HaplyAvatar{
     PVector travelledPoint=new PVector(0,0);
     float travelledDistance=0;
     float totalDistance = 0;
+    float xE;
+    float yE;
 
     public HaplyAvatar(String port, FWorld world){
         this.port = port;
@@ -277,6 +315,135 @@ public class HaplyAvatar{
         torques.set(widget.set_device_torques(fEE.array()));
         widget.device_write_torques();
     }
+
+
+
+    void minigame_drawEE(){
+      PShape ee = createShape(ELLIPSE, xE, yE, 20, 20);
+      ee.setFill(color(128,128,128));
+      shape(ee);
+    }
+
+    void minigame_getHaplyData(){
+      if(haplyBoard.data_available()){
+        /* GET END-EFFECTOR STATE (TASK SPACE) */
+        widget.device_read_data();
+        angles.set(widget.get_device_angles()); 
+        posEE.set(widget.get_device_position(angles.array()));
+        xE = (pixelsPerCentimeter * 100 * posEE.x) + worldWidth*pixelsPerCentimeter/2;
+        yE = (pixelsPerCentimeter * 100 * (posEE.y-0.03));
+      }
+    }
+
+    void minigame_renderForce(){
+      fEE = calculateForceTowardPath(travelledPoint, xE, yE);
+      fEE.set(graphics_to_device(fEE));
+      torques.set(widget.set_device_torques(fEE.array()));
+      widget.device_write_torques();
+    }
+
+    void minigame_drawUntravelledPath() {
+      noFill();
+      stroke(0);
+      strokeWeight(pathWidth);
+      
+      for (int i = travelledIndex; i < travelledIndex+1; i++) {
+        PVector start = squarePath.get(i);
+        PVector end = squarePath.get((i + 1) % squarePath.size());
+        beginShape();
+        vertex(start.x, start.y);
+        vertex(end.x, end.y);
+        endShape(CLOSE);
+      }
+    }
+
+    void minigame_drawTravelledPath() {
+      noFill();
+      strokeWeight(pathWidth);
+      totalDistance = 0;
+  
+      if (travelledIndex >0) {
+        stroke(0,200,200);
+        for (int i = 0; i < travelledIndex; i++) {
+          PVector start = squarePath.get(i);
+          PVector end = squarePath.get((i + 1) % squarePath.size());
+          totalDistance += start.copy().sub(end).mag();
+          beginShape();
+          vertex(start.x, start.y);
+          vertex(end.x, end.y);
+          endShape(CLOSE);
+        }
+      }
+  
+      if (travelledIndex >= squarePath.size()) {
+        // for this player, it's already finished
+        return ;
+      }
+    }
+
+    void minigame_pathTrackingStateUpdate() {
+      int i=travelledIndex;
+
+      PVector start = squarePath.get(i);
+      PVector end = squarePath.get((i + 1) % squarePath.size());
+
+      PVector closest = getClosestPointOnLine(new PVector(xE, yE), start, end);
+      
+      float distanceEEandClosest = PVector.dist(new PVector(xE, yE), closest);
+      
+      // too far from the path
+      if (distanceEEandClosest <= 40){
+        float nowTravelledDistance = PVector.dist(start, closest);
+        if (nowTravelledDistance - travelledDistance <50){
+          if (nowTravelledDistance > travelledDistance) {
+            travelledDistance = nowTravelledDistance;
+            travelledPoint = closest;
+            float fullDistance = PVector.dist(start, end);
+            if (nowTravelledDistance > fullDistance*0.99) {
+              travelledDistance = 0;
+              travelledIndex = travelledIndex + 1;
+              travelledPoint = squarePath.get(travelledIndex);
+            }
+          }
+        }
+      }
+      /*if(travelledPoint.copy().sub(travelledPoint2).mag()<=10 && (travelledIndex>1 || travelledIndex2>1)){
+        gameCompleted = true;
+        println("touched");
+        text("Player won! ", width/2, height/2);
+      }*/
+    }
+}
+
+/* helper functions section, place helper functions here ***************************************************************/
+
+PVector getClosestPointOnLine(PVector point, PVector start, PVector end) {
+  PVector lineVector = PVector.sub(end, start);
+  PVector pointVector = PVector.sub(point, start);
+  float projectionLength = pointVector.dot(lineVector) / lineVector.magSq();
+  projectionLength = constrain(projectionLength, 0, 1);
+  return PVector.add(start, PVector.mult(lineVector, projectionLength));
+}
+
+PVector calculateForceTowardPath(PVector travelledPt, float xe, float ye) {
+  PVector forceDirection = PVector.sub(travelledPt, new PVector(xe, ye));
+  float distance = forceDirection.mag();
+  PVector forceFeedback = new PVector(0, 0);
+
+  // no force feedback if it's too close to the path, partly to reduce oscillation
+  if (distance > 25) {
+    forceDirection.normalize();
+    forceFeedback=forceDirection.mult(0.02*distance);
+  }
+  return forceFeedback;
+}
+
+PVector device_to_graphics(PVector deviceFrame){
+  return deviceFrame.set(-deviceFrame.x, deviceFrame.y);
+}
+
+PVector graphics_to_device(PVector graphicsFrame){
+  return graphicsFrame.set(-graphicsFrame.x, graphicsFrame.y);
 }
 
 /* end helper functions section ****************************************************************************************/
