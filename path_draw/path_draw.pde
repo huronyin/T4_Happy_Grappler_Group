@@ -11,7 +11,7 @@ private final ScheduledExecutorService scheduler      = Executors.newScheduledTh
 /* end scheduler definition ********************************************************************************************/ 
 
 
-
+int               hardwareVersion                     = 3;
 /* device block definitions ********************************************************************************************/
 Board             haplyBoard;
 Board             haplyBoard2;
@@ -28,7 +28,7 @@ int               CCW                                 = 1;
 boolean           rendering_force                     = false;
 
 
-int               hardwareVersion                     = 2;
+
 /* end device block definition *****************************************************************************************/
 
 
@@ -104,10 +104,9 @@ void setup(){
   size(1000, 650);
   f                   = createFont("Arial", 16, true);
   
-  println(Serial.list());
   /* device setup */
-  haplyBoard          = new Board(this, Serial.list()[2], 0);
-  haplyBoard2          = new Board(this, Serial.list()[3], 0);
+  haplyBoard          = new Board(this, "COM4", 0);
+  haplyBoard2          = new Board(this, "COM5", 0);
   
   widgetOne           = new Device(widgetOneID, haplyBoard);
   widgetOne2           = new Device(widgetOneID, haplyBoard2);
@@ -119,23 +118,22 @@ void setup(){
   widgetOne.set_mechanism(pantograph);
   widgetOne2.set_mechanism(pantograph2);
   
+  widgetOne.add_actuator(1, CCW, 2);
+  widgetOne.add_actuator(2, CW, 1);
+  widgetOne2.add_actuator(1, CCW, 2);
+  widgetOne2.add_actuator(2, CW, 1);
+    
   if(hardwareVersion == 2){
-    widgetOne.add_actuator(1, CCW, 2);
-    widgetOne.add_actuator(2, CW, 1);
-    widgetOne2.add_actuator(1, CCW, 2);
-    widgetOne2.add_actuator(2, CW, 1);
- 
     widgetOne.add_encoder(1, CCW, 241, 10752, 2);
     widgetOne.add_encoder(2, CW, -61, 10752, 1);
     widgetOne2.add_encoder(1, CCW, 241, 10752, 2);
     widgetOne2.add_encoder(2, CW, -61, 10752, 1);
   }
   else if(hardwareVersion == 3){
-    widgetOne.add_actuator(1, CCW, 2);
-    widgetOne.add_actuator(2, CCW, 1);
- 
     widgetOne.add_encoder(1, CCW, 168, 4880, 2);
     widgetOne.add_encoder(2, CCW, 12, 4880, 1); 
+    widgetOne2.add_encoder(1, CCW, 168, 4880, 2);
+    widgetOne2.add_encoder(2, CCW, 12, 4880, 1); 
   }
   
   
@@ -399,7 +397,7 @@ PVector calculateForceTowardPath(PVector travelledPt, float xe, float ye) {
   if (distance > 25) {
     forceDirection.normalize();
     //print("forceDirectionNormalized: "+forceDirection.x+" "+forceDirection.y+"\n");
-    forceFeedback=forceDirection.mult(0.03*distance);
+    forceFeedback=forceDirection.mult(0.02*distance);
   }
   //print("forceFeedback: "+forceFeedback.x+" "+forceFeedback.y+"\n");
 
@@ -434,65 +432,50 @@ void pathTrackingMiniGameStateUpdate() {
   float distanceEEandClosest2 = PVector.dist(new PVector(xE2, yE2), closest2);
   
   // too far from the path
-  if (distanceEEandClosest > 40){
-    return ;
-  }
-  if (distanceEEandClosest2 > 40){
-    return ;
-  }
-
-  float nowTravelledDistance = PVector.dist(start, closest);
-  float nowTravelledDistance2 = PVector.dist(start2, closest2);
-
-  // it's jumping, not continuous movement along the path
-  if (nowTravelledDistance - travelledDistance >50){
-    return ;
-  }
-  if (nowTravelledDistance2 - travelledDistance2 >50){
-    return ;
-  }
-
-  //  update the travelled distance and the travelled point
-  if (nowTravelledDistance > travelledDistance) {
-    travelledDistance = nowTravelledDistance;
-    travelledPoint = closest;
-  }
-  if (nowTravelledDistance2 > travelledDistance2) {
-    travelledDistance2 = nowTravelledDistance2;
-    travelledPoint2 = closest2;
-  }
-
-  float fullDistance = PVector.dist(start, end);
-  float fullDistance2 = PVector.dist(start2, end2);
-
-  // one path is completed
-  if (nowTravelledDistance > fullDistance*0.99) {
-    travelledDistance = 0;
-    travelledIndex = travelledIndex + 1;
-    
-    if (travelledIndex == squarePath.size()) {
-      // game completed
-      gameCompleted = true;
-      return ;
+  if (distanceEEandClosest <= 40){
+    float nowTravelledDistance = PVector.dist(start, closest);
+    if (nowTravelledDistance - travelledDistance <50){
+      if (nowTravelledDistance > travelledDistance) {
+        travelledDistance = nowTravelledDistance;
+        travelledPoint = closest;
+        float fullDistance = PVector.dist(start, end);
+        if (nowTravelledDistance > fullDistance*0.99) {
+          travelledDistance = 0;
+          travelledIndex = travelledIndex + 1;
+          
+          if (travelledIndex == squarePath.size()) {
+            // game completed
+            gameCompleted = true;
+            return ;
+          }
+          travelledPoint = squarePath.get(travelledIndex);
+        }
+      }
     }
-
-    travelledPoint = squarePath.get(travelledIndex);
   }
-  if (nowTravelledDistance2 > fullDistance2*0.99) {
-    travelledDistance2 = 0;
-    travelledIndex2 = travelledIndex2 + 1;
-    
-    if (travelledIndex2 == squarePath2.size()) {
-      // game completed
-      gameCompleted = true;
-      return ;
+
+  if (distanceEEandClosest2 <= 40){
+    float nowTravelledDistance2 = PVector.dist(start2, closest2);
+    if (nowTravelledDistance2 - travelledDistance2 <50){
+      if (nowTravelledDistance2 > travelledDistance2) {
+        travelledDistance2 = nowTravelledDistance2;
+        travelledPoint2 = closest2;
+        float fullDistance2 = PVector.dist(start2, end2);
+        if (nowTravelledDistance2 > fullDistance2*0.99) {
+          travelledDistance2 = 0;
+          travelledIndex2 = travelledIndex2 + 1;
+          
+          if (travelledIndex2 == squarePath.size()) {
+            // game completed
+            gameCompleted = true;
+            return ;
+          }
+          travelledPoint2 = squarePath2.get(travelledIndex2);
+        }
+      }
     }
-
-    travelledPoint = squarePath.get(travelledIndex);
-    travelledPoint2 = squarePath2.get(travelledIndex2);
   }
 
-  //println("dissssssssssstttt issss   "+ travelledPoint.copy().sub(travelledPoint2).mag());
   if(travelledPoint.copy().sub(travelledPoint2).mag()<=10 && (travelledIndex>1 || travelledIndex2>1)){
     gameCompleted = true;
     println("touched");
