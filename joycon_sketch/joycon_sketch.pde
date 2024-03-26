@@ -29,6 +29,7 @@ private final ScheduledExecutorService scheduler      = Executors.newScheduledTh
 /* end scheduler definition ********************************************************************************************/ 
 
 boolean           renderingForce                      = false;
+boolean           isMinigame                          = false;
 
 /* framerate definition ************************************************************************************************/
 long              baseFrameRate                       = 120;
@@ -127,8 +128,13 @@ void setup(){
 void draw(){
   /* put graphical code here, runs repeatedly at defined framerate in setup, else default at 60fps: */
   if(renderingForce == false){
-    background(255);
-    world.draw();
+    if (!isMinigame){
+      background(255);
+      world.draw();
+    }
+    else{
+      background(0);
+    }
   }
 }
 /* end draw section ****************************************************************************************************/
@@ -142,17 +148,22 @@ class SimulationThread implements Runnable{
     /* put haptic simulation code here, runs repeatedly at 1kHz as defined in setup */
     renderingForce = true;
     
-    avatar1.run();
-    avatar2.run();
-
-    world.step(1.0f/1000.0f);
+    if (!isMinigame){
+      avatar1.run();
+      avatar2.run();
+      world.step(1.0f/1000.0f);
+    }
   
     renderingForce = false;
   }
 }
 /* end simulation section **********************************************************************************************/
 
-
+void keyPressed() {
+  if (key == 'o') {
+    isMinigame = !isMinigame;
+  }
+}
 
 /* helper functions section, place helper functions here ***************************************************************/
 
@@ -197,6 +208,13 @@ public class HaplyAvatar{
 
     /* USB port */
     String            port = "";
+
+    /* Minigame variables */
+    ArrayList<PVector> squarePath = new ArrayList<PVector>();
+    int travelledIndex=0;
+    PVector travelledPoint=new PVector(0,0);
+    float travelledDistance=0;
+    float totalDistance = 0;
 
     public HaplyAvatar(String port, FWorld world){
         this.port = port;
