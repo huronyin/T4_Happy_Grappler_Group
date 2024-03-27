@@ -141,13 +141,14 @@ void draw(){
       world.draw();
     }
     else{
-      background(200); 
+      background(10); 
       //textFont(f, 50);
       //fill(0, 150, 100);
       //textAlign(CENTER);
       
       avatar1.minigame_drawEE();
       avatar2.minigame_drawEE();
+      print("draw EE");
       avatar1.minigame_drawUntravelledPath();
       avatar2.minigame_drawUntravelledPath();
       avatar1.minigame_drawTravelledPath();
@@ -188,14 +189,17 @@ class SimulationThread implements Runnable{
       avatar1.minigame_getHaplyData();
       avatar2.minigame_getHaplyData();
       
+      print("got data");
 
       avatar1.minigame_pathTrackingStateUpdate();
       avatar2.minigame_pathTrackingStateUpdate();
       
+      print("update state");
 
       avatar1.minigame_renderForce();
       avatar2.minigame_renderForce();
       
+      print("render force");
     }
   
     renderingForce = false;
@@ -288,8 +292,6 @@ public class HaplyAvatar{
         haplyAvatar = loadImage("../img/smile.png"); 
         haplyAvatar.resize((int)(hAPI_Fisica.worldToScreen(1.8)), (int)(hAPI_Fisica.worldToScreen(1.8)));
         sh_avatar.attachImage(haplyAvatar); 
-
-        minigame_generateSquarePath();
     }
 
     public void run(){
@@ -339,8 +341,8 @@ public class HaplyAvatar{
         widget.device_read_data();
         angles.set(widget.get_device_angles()); 
         posEE.set(widget.get_device_position(angles.array()));
-        xE = (pixelsPerCentimeter *100 * posEE.x) + worldWidth*pixelsPerCentimeter/2;
-        yE = (pixelsPerCentimeter *100 * (posEE.y-0.03));
+        xE = (pixelsPerCentimeter * posEE.x) + worldWidth*pixelsPerCentimeter/2;
+        yE = (pixelsPerCentimeter * (posEE.y-0.03));
       }
     }
 
@@ -399,6 +401,7 @@ public class HaplyAvatar{
       PVector closest = getClosestPointOnLine(new PVector(xE, yE), start, end);
       
       float distanceEEandClosest = PVector.dist(new PVector(xE, yE), closest);
+      print("asdf");
       // too far from the path
       if (distanceEEandClosest <= 40){
         float nowTravelledDistance = PVector.dist(start, closest);
@@ -420,28 +423,6 @@ public class HaplyAvatar{
         println("touched");
         text("Player won! ", width/2, height/2);
       }*/
-    }
-
-    void minigame_generateSquarePath() {
-      float centerX = worldPixelWidth / 2;
-      float centerY = worldPixelHeight / 2;
-      float quadWidth = (centerX - pathWidth / 2)/2;
-      float quadHeight = (centerY - pathWidth / 2)/2;
-
-      if (id == 1){
-        squarePath.add(new PVector(quadWidth, quadHeight));
-        squarePath.add(new PVector(quadWidth, centerY + quadHeight));
-        squarePath.add(new PVector(centerX + quadWidth, centerY + quadHeight));
-        squarePath.add(new PVector(centerX + quadWidth, quadHeight));
-      }
-      else{
-        squarePath.add(new PVector(centerX + quadWidth, quadHeight));
-        squarePath.add(new PVector(centerX + quadWidth, centerY + quadHeight));
-        squarePath.add(new PVector(quadWidth, centerY + quadHeight));
-        squarePath.add(new PVector(quadWidth, quadHeight));
-      }
-      println("sq1 "+squarePath);
-      travelledPoint.set(quadWidth, quadHeight);
     }
 }
 
@@ -474,6 +455,28 @@ PVector device_to_graphics(PVector deviceFrame){
 
 PVector graphics_to_device(PVector graphicsFrame){
   return graphicsFrame.set(-graphicsFrame.x, graphicsFrame.y);
+}
+
+void generateSquarePath(int id) {
+  float centerX = worldPixelWidth / 2;
+  float centerY = worldPixelHeight / 2;
+  float quadWidth = (centerX - pathWidth / 2)/2;
+  float quadHeight = (centerY - pathWidth / 2)/2;
+
+  if (id == 1){
+    squarePath.add(new PVector(quadWidth, quadHeight));
+    squarePath.add(new PVector(quadWidth, centerY + quadHeight));
+    squarePath.add(new PVector(centerX + quadWidth, centerY + quadHeight));
+    squarePath.add(new PVector(centerX + quadWidth, quadHeight));
+  }
+  else{
+    squarePath.add(new PVector(centerX + quadWidth, quadHeight));
+    squarePath.add(new PVector(centerX + quadWidth, centerY + quadHeight));
+    squarePath.add(new PVector(quadWidth, centerY + quadHeight));
+    squarePath.add(new PVector(quadWidth, quadHeight));
+  }
+  println("sq1 "+squarePath);
+  travelledPoint.set(quadWidth, quadHeight);
 }
 
 /* end helper functions section ****************************************************************************************/
