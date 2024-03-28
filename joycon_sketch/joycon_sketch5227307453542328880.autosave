@@ -261,7 +261,6 @@ public class HaplyAvatar{
     float xE;
     float yE;
     int colour;
-    float minigame_scaling = 2.5;
 
     public HaplyAvatar(String port, FWorld world, int id){
         this.port = port;
@@ -310,10 +309,6 @@ public class HaplyAvatar{
             
             angles.set(widget.get_device_angles()); 
             posEE.set(widget.get_device_position(angles.array()));
-            print(posEE.x);
-            print(",");
-            print(posEE.y);
-            print("\n");
         }
         
         // calculate deltaXSpring
@@ -352,12 +347,8 @@ public class HaplyAvatar{
         widget.device_read_data();
         angles.set(widget.get_device_angles()); 
         posEE.set(widget.get_device_position(angles.array()));
-        xE = -(minigame_scaling *pixelsPerCentimeter *100 * posEE.x) + worldWidth*minigame_scaling*pixelsPerCentimeter/2;
-        yE = (minigame_scaling *pixelsPerCentimeter *100 * (posEE.y));
-        print(posEE.x);
-        print(",");
-        print(posEE.y);
-        print("\n");
+        xE = -(pixelsPerCentimeter *100 * posEE.x) + worldWidth*pixelsPerCentimeter/2;
+        yE = (pixelsPerCentimeter *100 * (posEE.y-0.03));
       }
     }
 
