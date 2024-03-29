@@ -95,8 +95,9 @@ void setup(){
   world               = new FWorld();
   
   /* Haply avatar initialization */
-  avatar1 = new HaplyAvatar("COM5", world,1);
-  avatar2 = new HaplyAvatar("COM6", world,2);
+  int hardwareVersion = 3;
+  avatar1 = new HaplyAvatar("COM5", world,1,hardwareVersion);
+  avatar2 = new HaplyAvatar("COM6", world,2,hardwareVersion);
 
   avatar1.setup(this);
   avatar2.setup(this);
@@ -262,23 +263,37 @@ public class HaplyAvatar{
     float yE;
     int colour;
     float minigame_scaling = 2.5;
-
-    public HaplyAvatar(String port, FWorld world, int id){
+    int version;
+    
+    public HaplyAvatar(String port, FWorld world, int id, int version){
         this.port = port;
         this.world = world;
         this.id = id;
+        this.version=version;
     }
 
     public void setup(PApplet app){
         haplyBoard          = new Board(app, port, 0);
         widget              = new Device(widgetID, haplyBoard);
-        pantograph          = new Pantograph();
+        pantograph          = new Pantograph(version);
         
         widget.set_mechanism(pantograph);
-        widget.add_actuator(1, CCW, 2);
-        widget.add_actuator(2, CCW, 1);
-        widget.add_encoder(1, CCW, 168, 4880, 2);
-        widget.add_encoder(2, CCW, 12, 4880, 1);
+
+        if(version == 2){
+          widget.add_actuator(1, CCW, 2);
+          widget.add_actuator(2, CW, 1);
+      
+          widget.add_encoder(1, CCW, 241, 10752, 2);
+          widget.add_encoder(2, CW, -61, 10752, 1);
+        }
+        else if(version == 3){
+          widget.add_actuator(1, CCW, 2);
+          widget.add_actuator(2, CCW, 1);
+      
+          widget.add_encoder(1, CCW, 168, 4880, 2);
+          widget.add_encoder(2, CCW, 12, 4880, 1); 
+        }
+          
         widget.device_set_parameters();
 
         sh_avatar = new FCircle(1.8);
@@ -425,20 +440,18 @@ public class HaplyAvatar{
       PVector closest = getClosestPointOnLine(new PVector(xE, yE), start, end);
       
       float distanceEEandClosest = PVector.dist(new PVector(xE, yE), closest);
-      // too far from the path
-      if (distanceEEandClosest <= 40){
-        float nowTravelledDistance = PVector.dist(start, closest);
-        if (nowTravelledDistance - travelledDistance <50){
-          if (nowTravelledDistance > travelledDistance) {
-            travelledDistance = nowTravelledDistance;
-            travelledPoint = closest;
-            float fullDistance = PVector.dist(start, end);
-            if (nowTravelledDistance > fullDistance*0.99) {
-              travelledDistance = 0;
-              travelledIndex = travelledIndex + 1;
-              travelledPoint = squarePath.get(travelledIndex);
-            }
-          }
+      float nowTravelledDistance = PVector.dist(start, closest);
+      float travelledIncrementDistance = nowTravelledDistance - travelledDistance;
+
+      if ((distanceEEandClosest <= 40) && ( travelledIncrementDistance<50) && (travelledIncrementDistance>0)){
+        // this player is moving forward!
+        travelledDistance = nowTravelledDistance;
+        travelledPoint = closest;
+        float fullDistance = PVector.dist(start, end);
+        if (nowTravelledDistance > fullDistance*0.99) {
+          travelledDistance = 0;
+          travelledIndex = travelledIndex + 1;
+          travelledPoint = squarePath.get(travelledIndex);
         }
       }
       /*if(travelledPoint.copy().sub(travelledPoint2).mag()<=10 && (travelledIndex>1 || travelledIndex2>1)){

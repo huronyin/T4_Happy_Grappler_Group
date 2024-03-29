@@ -29,11 +29,24 @@ public class Pantograph extends Mechanisms{
 	private float gain = 1.0f;
 	
 
-	public Pantograph(){
-	
-    this.l = 0.07f;
-    this.L = 0.09f;
-    this.d = 0.0f;	
+	public Pantograph(int hardwareVersion){
+  
+	  if(hardwareVersion == 2){
+      this.l = 0.07f;
+      this.L = 0.09f;
+      this.d = 0.0f;
+    }
+    else if(hardwareVersion == 3){
+      this.l = 0.07f;
+      this.L = 0.09f;
+      this.d = 0.038f;
+    }
+    else{
+      this.l = 0.07f;
+      this.L = 0.09f;
+      this.d = 0.038f;
+    }	
+    
   }
 	
 	
