@@ -184,8 +184,8 @@ class SimulationThread implements Runnable{
       avatar2.minigame_getHaplyData();
       
 
-      avatar1.minigame_pathTrackingStateUpdate();
-      avatar2.minigame_pathTrackingStateUpdate();
+      avatar1.minigame_stateUpdate();
+      avatar2.minigame_stateUpdate();
       
 
       avatar1.minigame_renderForce();
@@ -425,7 +425,7 @@ public class HaplyAvatar{
       endShape(CLOSE);
     }
 
-    void minigame_pathTrackingStateUpdate() {
+    void minigame_stateUpdate() {
       int i=travelledIndex;
 
       PVector start = squarePath.get(i);
@@ -456,6 +456,7 @@ public class HaplyAvatar{
     }
 
     void minigame_generateSquarePath() {
+      // TODO: path generation should be a helper function, avatar takes in a vector<point> as path
       float centerX = worldPixelWidth / 2;
       float centerY = worldPixelHeight / 2;
       float quadWidth = (centerX - pathWidth / 2)/2;
