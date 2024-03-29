@@ -23,6 +23,11 @@ import java.lang.*;
 /* end library imports *************************************************************************************************/  
 
 
+// device config
+int hardwareVersion = 3;
+String port1 = "COM5";
+String port2 = "COM6";
+
 
 /* scheduler definition ************************************************************************************************/ 
 private final ScheduledExecutorService scheduler      = Executors.newScheduledThreadPool(1);
@@ -38,6 +43,7 @@ long              baseFrameRate                       = 120;
 
 
 /* elements definition *************************************************************************************************/
+
 
 /* Screen and world setup parameters */
 float             pixelsPerCentimeter                 = 40.0;
@@ -77,27 +83,15 @@ void setup(){
   size(1000, 1000);
   
   /* device setup */
-  
-  /**  
-   * The board declaration needs to be changed depending on which USB serial port the Haply board is connected.
-   * In the base example, a connection is setup to the first detected serial device, this parameter can be changed
-   * to explicitly state the serial port will look like the following for different OS:
-   *
-   *      windows:      haplyBoard = new Board(this, "COM10", 0);
-   *      linux:        haplyBoard = new Board(this, "/dev/ttyUSB0", 0);
-   *      mac:          haplyBoard = new Board(this, "/dev/cu.usbmodem1411", 0);
-   */ 
-  
-  
+
   /* 2D physics scaling and world creation */
   hAPI_Fisica.init(this); 
   hAPI_Fisica.setScale(pixelsPerCentimeter); 
   world               = new FWorld();
   
   /* Haply avatar initialization */
-  int hardwareVersion = 3;
-  avatar1 = new HaplyAvatar("COM5", world,1,hardwareVersion);
-  avatar2 = new HaplyAvatar("COM6", world,2,hardwareVersion);
+  avatar1 = new HaplyAvatar(port1, world,1,hardwareVersion);
+  avatar2 = new HaplyAvatar(port2, world,2,hardwareVersion);
 
   avatar1.setup(this);
   avatar2.setup(this);
