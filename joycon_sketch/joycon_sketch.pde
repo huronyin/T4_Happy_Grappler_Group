@@ -24,12 +24,12 @@ import java.lang.*;
 
 
 // device config
-//int hardwareVersion = 3;
-//String port1 = "COM5";
-//String port2 = "COM6";
-int hardwareVersion = 2;
-String port1 =  Serial.list()[2];
-String port2 =  Serial.list()[3];
+int hardwareVersion = 3;
+String port1 = "COM4";
+String port2 = "COM5";
+// int hardwareVersion = 2;
+// String port1 =  Serial.list()[2];
+// String port2 =  Serial.list()[3];
 
 
 /* scheduler definition ************************************************************************************************/ 
@@ -40,7 +40,7 @@ boolean           renderingForce                      = false;
 boolean           isMinigame                          = false;
 
 /* framerate definition ************************************************************************************************/
-long              baseFrameRate                       = 120;
+long              baseFrameRate                       = 60;
 /* end framerate definition ********************************************************************************************/ 
 
 
@@ -53,9 +53,9 @@ float             pixelsPerCentimeter                 = 40.0;
 
 /* World boundaries in centimeters */
 FWorld            world;
-float             worldWidth                          = 15.0;  
+float             worldWidth                          = 25;  
 float             worldPixelWidth                     = worldWidth*pixelsPerCentimeter;
-float             worldHeight                         = 15.0; 
+float             worldHeight                         = 25; 
 float             worldPixelHeight                     = worldHeight*pixelsPerCentimeter;
 float             edgeTopLeftX                        = 0.0; 
 float             edgeTopLeftY                        = 0.0; 
@@ -83,7 +83,7 @@ void setup(){
   /* put setup code here, run once: */
   
   /* screen size definition */
-  size(600, 600);
+  size(1000, 1000);
   
   /* device setup */
 
@@ -143,13 +143,12 @@ void draw(){
       //textFont(f, 50);
       //fill(0, 150, 100);
       //textAlign(CENTER);
-      
-      avatar1.minigame_drawEE();
-      avatar2.minigame_drawEE();
       avatar1.minigame_drawUntravelledPath();
       avatar2.minigame_drawUntravelledPath();
       avatar1.minigame_drawTravelledPath();
       avatar2.minigame_drawTravelledPath();
+      avatar1.minigame_drawEE();
+      avatar2.minigame_drawEE();
       /*
       if(gameCompleted){
         if(avatar.totalDistance>avatar2.totalDistance){
@@ -262,7 +261,8 @@ public class HaplyAvatar{
     int colour;
     float minigame_scaling = 2.5;
     int version;
-    
+    PShape ee;
+
     public HaplyAvatar(String port, FWorld world, int id, int version){
         this.port = port;
         this.world = world;
@@ -355,9 +355,8 @@ public class HaplyAvatar{
 
 
     void minigame_drawEE(){
-      PShape ee = createShape(ELLIPSE, xE, yE, 20, 20);
-      //println("color is "+ colour);
-      ee.setFill(colour);
+      ee = createShape(ELLIPSE, xE, yE, 20, 20);
+      ee.setStroke(colour);
       shape(ee);
     }
 
@@ -367,16 +366,20 @@ public class HaplyAvatar{
         widget.device_read_data();
         angles.set(widget.get_device_angles()); 
         posEE.set(widget.get_device_position(angles.array()));
-        posEE.set(device_to_graphics(posEE));
-        //xE = -(minigame_scaling *pixelsPerCentimeter *100 * posEE.x) + worldWidth*minigame_scaling*pixelsPerCentimeter/2;
-        //yE = (minigame_scaling *pixelsPerCentimeter *100 * (posEE.y));
-        xE = (pixelsPerCentimeter *100 * posEE.x) + worldWidth*pixelsPerCentimeter/2;
-        yE = (pixelsPerCentimeter *100 * (posEE.y-0.03));
-
-        print(posEE.x);
-        print(",");
-        print(posEE.y);
-        print("\n");
+        // posEE.set(device_to_graphics(posEE));
+        // TODO: Ask the user to move EE to given position
+        float xECalib = 0;
+        if (id == 1){
+          xECalib = 0.05;
+        }
+        else{
+          xECalib = 0.06;
+        }
+        xE = -(minigame_scaling *pixelsPerCentimeter *100 * (posEE.x+xECalib)) + worldWidth*minigame_scaling*pixelsPerCentimeter/2;
+        yE = (minigame_scaling *pixelsPerCentimeter *100 * (posEE.y-0.03));
+        // xE = (pixelsPerCentimeter *100 * posEE.x) + worldWidth*pixelsPerCentimeter/2;
+        // yE = (pixelsPerCentimeter *100 * (posEE.y-0.03));
+        println("Minigame posEE:"+posEE.x+","+posEE.y+"; xE:"+xE+"; yE:"+yE);
       }
     }
 
@@ -467,6 +470,12 @@ public class HaplyAvatar{
 
     void minigame_generateSquarePath() {
       // TODO: path generation should be a helper function, avatar takes in a vector<point> as path
+      // 
+        // squarePath2.add(squarePath.get(0));
+        // for(int i=squarePath.size()-1;i>0;i--){
+        //   squarePath2.add(squarePath.get(i));
+        // }
+
       float centerX = worldPixelWidth / 2;
       float centerY = worldPixelHeight / 2;
       float quadWidth = (centerX - pathWidth / 2)/2;
@@ -479,10 +488,10 @@ public class HaplyAvatar{
         squarePath.add(new PVector(centerX + quadWidth, quadHeight));
       }
       else{
+        squarePath.add(new PVector(quadWidth, quadHeight));
         squarePath.add(new PVector(centerX + quadWidth, quadHeight));
         squarePath.add(new PVector(centerX + quadWidth, centerY + quadHeight));
         squarePath.add(new PVector(quadWidth, centerY + quadHeight));
-        squarePath.add(new PVector(quadWidth, quadHeight));
       }
       println("sq1 "+squarePath);
       travelledPoint.set(quadWidth, quadHeight);
@@ -520,4 +529,33 @@ PVector graphics_to_device(PVector graphicsFrame){
   return graphicsFrame.set(-graphicsFrame.x, graphicsFrame.y);
 }
 
+void generateSquarePath(HaplyAvatar h1, HaplyAvatar h2){
+  float centerX = worldPixelWidth / 2;
+  float centerY = worldPixelHeight / 2;
+  float quadWidth = (centerX - pathWidth / 2)/2;
+  float quadHeight = (centerY - pathWidth / 2)/2;
+
+  ArrayList<PVector> squarePath = new ArrayList<PVector>();
+  squarePath.add(new PVector(quadWidth, quadHeight));
+  squarePath.add(new PVector(quadWidth, centerY + quadHeight));
+  squarePath.add(new PVector(centerX + quadWidth, centerY + quadHeight));
+  squarePath.add(new PVector(centerX + quadWidth, quadHeight));
+  h1.squarePath = squarePath;
+  h1.travelledPoint.set(squarePath.get(0).x, squarePath.get(0).y);
+
+  ArrayList<PVector> reversedPath = new ArrayList<PVector>();
+  reversedPath.add(squarePath.get(0));
+  for(int i=squarePath.size()-1;i>0;i--){
+    reversedPath.add(squarePath.get(i));
+  }
+
+  h2.squarePath = reversedPath;
+  h2.travelledPoint.set(reversedPath.get(0).x, reversedPath.get(0).y);
+
+}
+
+void passPathToHaply(HaplyAvatar haply, ArrayList<PVector> path){
+  haply.squarePath = path;
+  haply.travelledPoint.set(path.get(0).x, path.get(0).y);
+}
 /* end helper functions section ****************************************************************************************/
