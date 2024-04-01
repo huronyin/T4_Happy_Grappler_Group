@@ -24,9 +24,12 @@ import java.lang.*;
 
 
 // device config
-int hardwareVersion = 3;
-String port1 = "COM5";
-String port2 = "COM6";
+//int hardwareVersion = 3;
+//String port1 = "COM5";
+//String port2 = "COM6";
+int hardwareVersion = 2;
+String port1 =  Serial.list()[2];
+String port2 =  Serial.list()[3];
 
 
 /* scheduler definition ************************************************************************************************/ 
@@ -50,9 +53,9 @@ float             pixelsPerCentimeter                 = 40.0;
 
 /* World boundaries in centimeters */
 FWorld            world;
-float             worldWidth                          = 25.0;  
+float             worldWidth                          = 15.0;  
 float             worldPixelWidth                     = worldWidth*pixelsPerCentimeter;
-float             worldHeight                         = 25.0; 
+float             worldHeight                         = 15.0; 
 float             worldPixelHeight                     = worldHeight*pixelsPerCentimeter;
 float             edgeTopLeftX                        = 0.0; 
 float             edgeTopLeftY                        = 0.0; 
@@ -80,7 +83,7 @@ void setup(){
   /* put setup code here, run once: */
   
   /* screen size definition */
-  size(1000, 1000);
+  size(600, 600);
   
   /* device setup */
 
@@ -182,7 +185,8 @@ class SimulationThread implements Runnable{
     else{
       avatar1.minigame_getHaplyData();
       avatar2.minigame_getHaplyData();
-      
+      println("av1 x: "+ avatar1.posEE.x+"av1 y: "+avatar1.posEE.y);
+      println("av2 x: "+ avatar2.posEE.x+"av2 y: "+avatar2.posEE.y);
 
       avatar1.minigame_stateUpdate();
       avatar2.minigame_stateUpdate();
@@ -296,7 +300,8 @@ public class HaplyAvatar{
         sh_avatar.setHaptic(true, 1000, 1);
         world.add(sh_avatar);
 
-        haplyAvatar = loadImage("../img/smile.png"); 
+        //haplyAvatar = loadImage("../img/smile.png"); 
+        haplyAvatar = loadImage("img/smile.png"); 
         haplyAvatar.resize((int)(hAPI_Fisica.worldToScreen(1.8)), (int)(hAPI_Fisica.worldToScreen(1.8)));
         sh_avatar.attachImage(haplyAvatar); 
 
@@ -351,6 +356,7 @@ public class HaplyAvatar{
 
     void minigame_drawEE(){
       PShape ee = createShape(ELLIPSE, xE, yE, 20, 20);
+      //println("color is "+ colour);
       ee.setFill(colour);
       shape(ee);
     }
@@ -361,8 +367,12 @@ public class HaplyAvatar{
         widget.device_read_data();
         angles.set(widget.get_device_angles()); 
         posEE.set(widget.get_device_position(angles.array()));
-        xE = -(minigame_scaling *pixelsPerCentimeter *100 * posEE.x) + worldWidth*minigame_scaling*pixelsPerCentimeter/2;
-        yE = (minigame_scaling *pixelsPerCentimeter *100 * (posEE.y));
+        posEE.set(device_to_graphics(posEE));
+        //xE = -(minigame_scaling *pixelsPerCentimeter *100 * posEE.x) + worldWidth*minigame_scaling*pixelsPerCentimeter/2;
+        //yE = (minigame_scaling *pixelsPerCentimeter *100 * (posEE.y));
+        xE = (pixelsPerCentimeter *100 * posEE.x) + worldWidth*pixelsPerCentimeter/2;
+        yE = (pixelsPerCentimeter *100 * (posEE.y-0.03));
+
         print(posEE.x);
         print(",");
         print(posEE.y);
