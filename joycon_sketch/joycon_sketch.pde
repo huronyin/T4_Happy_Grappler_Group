@@ -24,12 +24,12 @@ import java.lang.*;
 
 
 // device config
-int hardwareVersion = 3;
-String port1 = "COM4";
-String port2 = "COM5";
-// int hardwareVersion = 2;
-// String port1 =  Serial.list()[2];
-// String port2 =  Serial.list()[3];
+//int hardwareVersion = 3;
+//String port1 = "COM4";
+//String port2 = "COM5";
+int hardwareVersion = 2;
+String port1 =  Serial.list()[2];
+String port2 =  Serial.list()[3];
 
 
 /* scheduler definition ************************************************************************************************/ 
@@ -73,6 +73,8 @@ HaplyAvatar       avatar2;
 /* Minigame stuff */
 PFont f;
 float pathWidth = 20; // Adjust the width of the path as desired
+boolean           miniGameCompleted                   = false;
+int               miniGameEndTime;
 
 /* end elements definition *********************************************************************************************/ 
 
@@ -140,27 +142,27 @@ void draw(){
     }
     else{
       background(200); 
-      //textFont(f, 50);
-      //fill(0, 150, 100);
-      //textAlign(CENTER);
+      textFont(f, 50);
+      fill(0, 150, 100);
+      textAlign(CENTER);
       avatar1.minigame_drawUntravelledPath();
       avatar2.minigame_drawUntravelledPath();
       avatar1.minigame_drawTravelledPath();
       avatar2.minigame_drawTravelledPath();
       avatar1.minigame_drawEE();
       avatar2.minigame_drawEE();
-      /*
-      if(gameCompleted){
-        if(avatar.totalDistance>avatar2.totalDistance){
-          text("Player1 won! ", width/2, height/2);
+      
+      if(miniGameCompleted){
+        if(avatar1.totalDistance>avatar2.totalDistance){
+          text("Player1 won! ", worldPixelWidth/2, worldPixelHeight/2);
         }
-        else if(totalDistance < totalDistance2){
-          text("Player2 won! ", width/2, height/2);
+        else if(avatar1.totalDistance < avatar2.totalDistance){
+          text("Player2 won! ", worldPixelWidth/2, worldPixelHeight/2);
         }
         else{
-          text("It's a tie! ", width/2, height/2);
+          text("It's a tie! ", worldPixelWidth/2, worldPixelHeight/2);
         }
-      }*/
+      }
     }
   }
 }
@@ -184,8 +186,8 @@ class SimulationThread implements Runnable{
     else{
       avatar1.minigame_getHaplyData();
       avatar2.minigame_getHaplyData();
-      println("av1 x: "+ avatar1.posEE.x+"av1 y: "+avatar1.posEE.y);
-      println("av2 x: "+ avatar2.posEE.x+"av2 y: "+avatar2.posEE.y);
+      //println("av1 x: "+ avatar1.posEE.x+"av1 y: "+avatar1.posEE.y);
+      //println("av2 x: "+ avatar2.posEE.x+"av2 y: "+avatar2.posEE.y);
 
       avatar1.minigame_stateUpdate();
       avatar2.minigame_stateUpdate();
@@ -193,7 +195,21 @@ class SimulationThread implements Runnable{
 
       avatar1.minigame_renderForce();
       avatar2.minigame_renderForce();
-      
+
+      //to check if players have come in contact and game has ended
+      if(avatar1.travelledPoint.copy().sub(avatar2.travelledPoint).mag()<=10 && (avatar1.travelledIndex>1 || avatar2.travelledIndex>1)){
+        miniGameCompleted = true;
+        //println("touched");
+        miniGameEndTime = millis();
+        //text("Player won! ", width/2, height/2);
+      }
+
+      //to exit minigame mode 5 seconds after the game finishes and the  winner is declared.
+      if(millis() - miniGameEndTime >= 5000 && miniGameCompleted){
+        isMinigame = !isMinigame;
+        println("mini game has now endeddddd");
+      }
+
     }
   
     renderingForce = false;
@@ -324,10 +340,10 @@ public class HaplyAvatar{
             
             angles.set(widget.get_device_angles()); 
             posEE.set(widget.get_device_position(angles.array()));
-            print(posEE.x);
-            print(",");
-            print(posEE.y);
-            print("\n");
+            //print(posEE.x);
+            //print(",");
+            //print(posEE.y);
+            //print("\n");
         }
         
         // calculate deltaXSpring
@@ -379,7 +395,7 @@ public class HaplyAvatar{
         yE = (minigame_scaling *pixelsPerCentimeter *100 * (posEE.y-0.03));
         // xE = (pixelsPerCentimeter *100 * posEE.x) + worldWidth*pixelsPerCentimeter/2;
         // yE = (pixelsPerCentimeter *100 * (posEE.y-0.03));
-        println("Minigame posEE:"+posEE.x+","+posEE.y+"; xE:"+xE+"; yE:"+yE);
+        //println("Minigame posEE:"+posEE.x+","+posEE.y+"; xE:"+xE+"; yE:"+yE);
       }
     }
 
@@ -493,7 +509,7 @@ public class HaplyAvatar{
         squarePath.add(new PVector(centerX + quadWidth, centerY + quadHeight));
         squarePath.add(new PVector(quadWidth, centerY + quadHeight));
       }
-      println("sq1 "+squarePath);
+      //println("sq1 "+squarePath);
       travelledPoint.set(quadWidth, quadHeight);
     }
 }
