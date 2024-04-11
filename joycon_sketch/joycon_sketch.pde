@@ -27,9 +27,9 @@ import java.lang.*;
 //int hardwareVersion = 3;
 //String port1 = "COM4";
 //String port2 = "COM5";
-int hardwareVersion = 2;
-String port1 =  Serial.list()[2];
-String port2 =  Serial.list()[3];
+int hardwareVersion = 3;
+String port1 =  "COM5";
+String port2 =  "COM6";
 
 
 /* scheduler definition ************************************************************************************************/ 
@@ -37,7 +37,6 @@ private final ScheduledExecutorService scheduler      = Executors.newScheduledTh
 /* end scheduler definition ********************************************************************************************/ 
 
 boolean           renderingForce                      = false;
-boolean           isMinigame                          = false;
 
 /* framerate definition ************************************************************************************************/
 long              baseFrameRate                       = 60;
@@ -73,6 +72,8 @@ HaplyAvatar       avatar2;
 /* Minigame stuff */
 PFont f;
 float pathWidth = 20; // Adjust the width of the path as desired
+boolean           isMinigame                          = false;
+int               inDangerID                          = 0;
 boolean           miniGameCompleted                   = false;
 int               miniGameEndTime;
 
@@ -153,14 +154,16 @@ void draw(){
       avatar2.minigame_drawEE();
       
       if(miniGameCompleted){
-        if(avatar1.totalDistance>avatar2.totalDistance){
-          text("Player1 won! ", worldPixelWidth/2, worldPixelHeight/2);
+        if(avatar1.totalDistance>avatar2.totalDistance && (inDangerID == 2)){
+          text("Player1 won!", worldPixelWidth/2, worldPixelHeight/2);
         }
-        else if(avatar1.totalDistance < avatar2.totalDistance){
-          text("Player2 won! ", worldPixelWidth/2, worldPixelHeight/2);
+        else if(avatar1.totalDistance < avatar2.totalDistance && (inDangerID == 1)){
+          text("Player2 won!", worldPixelWidth/2, worldPixelHeight/2);
         }
         else{
-          text("It's a tie! ", worldPixelWidth/2, worldPixelHeight/2);
+          text("Safe! Reset to original position", worldPixelWidth/2, worldPixelHeight/2);
+          avatar1.sh_avatar.setPosition(edgeTopLeftX+worldWidth/2.0, edgeTopLeftY+2*worldHeight/7.0);
+          avatar2.sh_avatar.setPosition(edgeTopLeftX+worldWidth/2.0, edgeTopLeftY+2*worldHeight/7.0);
         }
       }
     }
@@ -198,16 +201,19 @@ class SimulationThread implements Runnable{
 
       //to check if players have come in contact and game has ended
       if(avatar1.travelledPoint.copy().sub(avatar2.travelledPoint).mag()<=10 && (avatar1.travelledIndex>1 || avatar2.travelledIndex>1)){
-        miniGameCompleted = true;
-        //println("touched");
-        miniGameEndTime = millis();
-        //text("Player won! ", width/2, height/2);
+        if(!miniGameCompleted){
+          miniGameCompleted = true;
+          miniGameEndTime = millis();
+        }
       }
 
       //to exit minigame mode 5 seconds after the game finishes and the  winner is declared.
       if(millis() - miniGameEndTime >= 5000 && miniGameCompleted){
         isMinigame = !isMinigame;
-        println("mini game has now endeddddd");
+        miniGameCompleted = false;
+        avatar1.minigame_reset();
+        avatar2.minigame_reset();
+        //println("mini game has now endeddddd");
       }
 
     }
@@ -219,7 +225,7 @@ class SimulationThread implements Runnable{
 
 void keyPressed() {
   if (key == 'o') {
-    isMinigame = !isMinigame;
+    //isMinigame = !isMinigame;
   }
 }
 
@@ -357,10 +363,22 @@ public class HaplyAvatar{
         fSpring = fSpring.add(deltaXSpring.mult(-kSpring));
         fEE = (fSpring.copy());
         
-        // calculate collision reaction forces
+        // get contacts
         contactList = sh_avatar.getContacts();
+        
         for(int i=0;i<contactList.size();i++)
         {
+          // check for red wall collision
+          if(contactList.get(i).getBody1().getFillColor() == color(255,0,0)){
+            inDangerID = id;
+            isMinigame = true;
+          }
+          else if(contactList.get(i).getBody2().getFillColor() == color(255,0,0)){
+            inDangerID = id;
+            isMinigame = true;
+          }
+          
+          // calculate collision reaction forces
           fEE.add(contactList.get(i).getVelocityX() * reactionMult, -contactList.get(i).getVelocityY() * reactionMult);
         }
         
@@ -368,7 +386,13 @@ public class HaplyAvatar{
         widget.device_write_torques();
     }
 
-
+    void minigame_reset(){
+      ArrayList<PVector> squarePath = new ArrayList<PVector>();
+      int travelledIndex=0;
+      PVector travelledPoint=new PVector(0,0);
+      float travelledDistance=0;
+      float totalDistance = 0;
+    }
 
     void minigame_drawEE(){
       ee = createShape(ELLIPSE, xE, yE, 20, 20);
