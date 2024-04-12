@@ -77,6 +77,10 @@ int               inDangerID                          = 0;
 boolean           miniGameCompleted                   = false;
 int               miniGameEndTime;
 
+
+/* Startup stuff */
+int               startDelayMillis                    = 8000;
+
 /* end elements definition *********************************************************************************************/ 
 
 
@@ -136,6 +140,9 @@ void setup(){
 /* draw section ********************************************************************************************************/
 void draw(){
   /* put graphical code here, runs repeatedly at defined framerate in setup, else default at 60fps: */
+  
+  
+  
   if(renderingForce == false){
     if (!isMinigame){
       background(255);
@@ -144,7 +151,7 @@ void draw(){
     else{
       background(200); 
       textFont(f, 50);
-      fill(0, 150, 100);
+      fill(0,0,0);
       textAlign(CENTER);
       avatar1.minigame_drawUntravelledPath();
       avatar2.minigame_drawUntravelledPath();
@@ -163,7 +170,7 @@ void draw(){
         else{
           text("Safe! Reset to original position", worldPixelWidth/2, worldPixelHeight/2);
           avatar1.sh_avatar.setPosition(edgeTopLeftX+worldWidth/2.0, edgeTopLeftY+2*worldHeight/7.0);
-          avatar2.sh_avatar.setPosition(edgeTopLeftX+worldWidth/2.0, edgeTopLeftY+2*worldHeight/7.0);
+          avatar2.sh_avatar.setPosition(edgeTopLeftX+worldWidth/2.0, edgeTopLeftY+2*worldHeight/5.0);
         }
       }
     }
@@ -183,7 +190,10 @@ class SimulationThread implements Runnable{
     if (!isMinigame){
       avatar1.run();
       avatar2.run();
-      world.step(1.0f/1000.0f);
+      
+      if(millis()>startDelayMillis){
+        world.step(1.0f/1000.0f);
+      }
     }
 
     else{
@@ -209,10 +219,10 @@ class SimulationThread implements Runnable{
 
       //to exit minigame mode 5 seconds after the game finishes and the  winner is declared.
       if(millis() - miniGameEndTime >= 5000 && miniGameCompleted){
-        isMinigame = !isMinigame;
-        miniGameCompleted = false;
         avatar1.minigame_reset();
         avatar2.minigame_reset();
+        isMinigame = !isMinigame;
+        miniGameCompleted = false;
         //println("mini game has now endeddddd");
       }
 
@@ -318,22 +328,33 @@ public class HaplyAvatar{
 
         sh_avatar = new FCircle(1.8);
         sh_avatar.setDensity(4);  
-        sh_avatar.setPosition(edgeTopLeftX+worldWidth/2.0, edgeTopLeftY+2*worldHeight/7.0); 
+        if(id == 1){
+          sh_avatar.setPosition(edgeTopLeftX+worldWidth/2.0, edgeTopLeftY+2*worldHeight/7.0); 
+        }
+        else{
+          sh_avatar.setPosition(edgeTopLeftX+worldWidth/2.0, edgeTopLeftY+2*worldHeight/5.0); 
+        }
+        
         sh_avatar.setHaptic(true, 1000, 1);
         world.add(sh_avatar);
 
-        //haplyAvatar = loadImage("../img/smile.png"); 
-        haplyAvatar = loadImage("img/smile.png"); 
+        if(id == 1){
+          haplyAvatar = loadImage("img/smile.png"); 
+        }
+        else{
+          haplyAvatar = loadImage("img/smile2.png"); 
+        }
+        
         haplyAvatar.resize((int)(hAPI_Fisica.worldToScreen(1.8)), (int)(hAPI_Fisica.worldToScreen(1.8)));
         sh_avatar.attachImage(haplyAvatar); 
 
         minigame_generateSquarePath();
 
         if(id == 1){
-          colour = color(200,0,200);
+          colour = color(243,236,25);
         }
         else{
-          colour = color(0,200,200);
+          colour = color(34,177,76);
         }
     }
 
@@ -387,11 +408,13 @@ public class HaplyAvatar{
     }
 
     void minigame_reset(){
-      ArrayList<PVector> squarePath = new ArrayList<PVector>();
-      int travelledIndex=0;
-      PVector travelledPoint=new PVector(0,0);
-      float travelledDistance=0;
-      float totalDistance = 0;
+      this.squarePath = new ArrayList<PVector>();
+      this.travelledIndex=0;
+      this.travelledPoint=new PVector(0,0);
+      this.travelledDistance=0;
+      this.totalDistance = 0;
+      
+      minigame_generateSquarePath();
     }
 
     void minigame_drawEE(){
@@ -518,23 +541,23 @@ public class HaplyAvatar{
 
       float centerX = worldPixelWidth / 2;
       float centerY = worldPixelHeight / 2;
-      float quadWidth = (centerX - pathWidth / 2)/2;
-      float quadHeight = (centerY - pathWidth / 2)/2;
+      float quadWidth = (centerX - pathWidth / 2)/3;
+      float quadHeight = (centerY - pathWidth / 2)/3;
 
       if (id == 1){
-        squarePath.add(new PVector(quadWidth, quadHeight));
-        squarePath.add(new PVector(quadWidth, centerY + quadHeight));
+        squarePath.add(new PVector(centerX - quadWidth, centerY + quadHeight));
+        squarePath.add(new PVector(centerX - quadWidth, centerY - quadHeight));
+        squarePath.add(new PVector(centerX + quadWidth, centerY - quadHeight));
         squarePath.add(new PVector(centerX + quadWidth, centerY + quadHeight));
-        squarePath.add(new PVector(centerX + quadWidth, quadHeight));
       }
       else{
-        squarePath.add(new PVector(quadWidth, quadHeight));
-        squarePath.add(new PVector(centerX + quadWidth, quadHeight));
+        squarePath.add(new PVector(centerX - quadWidth, centerY + quadHeight));
         squarePath.add(new PVector(centerX + quadWidth, centerY + quadHeight));
-        squarePath.add(new PVector(quadWidth, centerY + quadHeight));
+        squarePath.add(new PVector(centerX + quadWidth, centerY - quadHeight));
+        squarePath.add(new PVector(centerX - quadWidth, centerY - quadHeight));
       }
       //println("sq1 "+squarePath);
-      travelledPoint.set(quadWidth, quadHeight);
+      travelledPoint.set(centerX - quadWidth, centerY + quadHeight);
     }
 }
 
@@ -567,35 +590,5 @@ PVector device_to_graphics(PVector deviceFrame){
 
 PVector graphics_to_device(PVector graphicsFrame){
   return graphicsFrame.set(-graphicsFrame.x, graphicsFrame.y);
-}
-
-void generateSquarePath(HaplyAvatar h1, HaplyAvatar h2){
-  float centerX = worldPixelWidth / 2;
-  float centerY = worldPixelHeight / 2;
-  float quadWidth = (centerX - pathWidth / 2)/2;
-  float quadHeight = (centerY - pathWidth / 2)/2;
-
-  ArrayList<PVector> squarePath = new ArrayList<PVector>();
-  squarePath.add(new PVector(quadWidth, quadHeight));
-  squarePath.add(new PVector(quadWidth, centerY + quadHeight));
-  squarePath.add(new PVector(centerX + quadWidth, centerY + quadHeight));
-  squarePath.add(new PVector(centerX + quadWidth, quadHeight));
-  h1.squarePath = squarePath;
-  h1.travelledPoint.set(squarePath.get(0).x, squarePath.get(0).y);
-
-  ArrayList<PVector> reversedPath = new ArrayList<PVector>();
-  reversedPath.add(squarePath.get(0));
-  for(int i=squarePath.size()-1;i>0;i--){
-    reversedPath.add(squarePath.get(i));
-  }
-
-  h2.squarePath = reversedPath;
-  h2.travelledPoint.set(reversedPath.get(0).x, reversedPath.get(0).y);
-
-}
-
-void passPathToHaply(HaplyAvatar haply, ArrayList<PVector> path){
-  haply.squarePath = path;
-  haply.travelledPoint.set(path.get(0).x, path.get(0).y);
 }
 /* end helper functions section ****************************************************************************************/
