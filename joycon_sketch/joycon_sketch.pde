@@ -146,6 +146,12 @@ void draw(){
   if(renderingForce == false){
     if (!isMinigame){
       background(255);
+      if (millis() < startDelayMillis){
+        textFont(f, 50);
+        fill(0,0,0);
+        textAlign(CENTER);
+        text("Get ready!", worldPixelWidth/2, worldPixelHeight/2);
+      }
       world.draw();
     }
     else{
