@@ -136,7 +136,7 @@ void setup(){
 /* end setup section ***************************************************************************************************/
 
 
-int minigame_winning_player = 0;
+
 /* draw section ********************************************************************************************************/
 void draw(){
   /* put graphical code here, runs repeatedly at defined framerate in setup, else default at 60fps: */
@@ -168,11 +168,9 @@ void draw(){
       
       if(miniGameCompleted){
         if(avatar1.totalDistance>avatar2.totalDistance && (inDangerID == 2)){
-          minigame_winning_player = 1;
           text("Player1 won!", worldPixelWidth/2, worldPixelHeight/2);
         }
         else if(avatar1.totalDistance < avatar2.totalDistance && (inDangerID == 1)){
-          minigame_winning_player = 2;
           text("Player2 won!", worldPixelWidth/2, worldPixelHeight/2);
         }
         else{
@@ -258,7 +256,6 @@ public class HaplyAvatar{
     int               CCW                                 = 1;
     boolean           renderingForce                      = false;
     int               id;
-    boolean           miniGameWinningBoost                = false;
     /* end device block definition *****************************************************************************************/
 
     /* joint space */
@@ -369,36 +366,6 @@ public class HaplyAvatar{
 
     public void run(){
         /* put haptic simulation code here, runs repeatedly at 1kHz as defined in setup */
-        
-        if ( (millis() - miniGameEndTime >= 5000) && (millis() - miniGameEndTime <= 15000)){
-          if (!miniGameWinningBoost){
-            sh_avatar.setSize(2.8);
-            sh_avatar.dettachImage();
-            if(id == 1){
-              haplyAvatar = loadImage("img/smileW.png"); 
-            }
-            else{
-              haplyAvatar = loadImage("img/smile2W.png"); 
-            }
-            haplyAvatar.resize((int)(hAPI_Fisica.worldToScreen(2.8)), (int)(hAPI_Fisica.worldToScreen(2.8)));
-            sh_avatar.attachImage(haplyAvatar); 
-            miniGameWinningBoost = true;
-          }
-        }
-
-        if (miniGameWinningBoost && (millis() - miniGameEndTime >= 15000)){
-          sh_avatar.setSize(1.8);
-          sh_avatar.dettachImage();
-          if(id == 1){
-            haplyAvatar = loadImage("img/smile.png"); 
-          }
-          else{
-            haplyAvatar = loadImage("img/smile2.png"); 
-          }
-          haplyAvatar.resize((int)(hAPI_Fisica.worldToScreen(1.8)), (int)(hAPI_Fisica.worldToScreen(1.8)));
-          sh_avatar.attachImage(haplyAvatar); 
-          miniGameWinningBoost = false;
-        }
         
         if(haplyBoard.data_available()){
             /* GET END-EFFECTOR STATE (TASK SPACE) */
