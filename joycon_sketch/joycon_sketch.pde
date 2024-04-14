@@ -27,9 +27,12 @@ import java.lang.*;
 //int hardwareVersion = 3;
 //String port1 = "COM4";
 //String port2 = "COM5";
-int hardwareVersion = 3;
-String port1 =  "COM5";
-String port2 =  "COM6";
+// int hardwareVersion = 3;
+// String port1 =  "COM5";
+// String port2 =  "COM6";
+int hardwareVersion = 2;
+String port1 =  Serial.list()[2];
+String port2 =  Serial.list()[3];
 
 
 /* scheduler definition ************************************************************************************************/ 
@@ -159,6 +162,8 @@ void draw(){
       textFont(f, 50);
       fill(0,0,0);
       textAlign(CENTER);
+      avatar1.minigame_drawDirectionCues();
+      avatar2.minigame_drawDirectionCues();
       avatar1.minigame_drawUntravelledPath();
       avatar2.minigame_drawUntravelledPath();
       avatar1.minigame_drawTravelledPath();
@@ -300,6 +305,8 @@ public class HaplyAvatar{
     float minigame_scaling = 2.5;
     int version;
     PShape ee;
+    PShape directionCueShape;
+    int directionCueIncrementer=0;
 
     public HaplyAvatar(String port, FWorld world, int id, int version){
         this.port = port;
@@ -427,6 +434,28 @@ public class HaplyAvatar{
       ee = createShape(ELLIPSE, xE, yE, 20, 20);
       ee.setStroke(colour);
       shape(ee);
+    }
+
+    void minigame_drawDirectionCues(){
+      if(id==2){
+        directionCueShape = createShape(TRIANGLE, directionCueIncrementer + 320, 710, directionCueIncrementer + 320, 730, directionCueIncrementer+330, 720);
+        directionCueShape.setStroke(colour);
+        directionCueIncrementer += 1; // Increment x-coordinate
+  
+        if(directionCueIncrementer > 350){
+          directionCueIncrementer = 0;
+        }
+      }
+      else{
+        directionCueShape = createShape(TRIANGLE, 265, directionCueIncrementer + 690, 285, directionCueIncrementer + 690, 275, directionCueIncrementer+680);
+        directionCueShape.setStroke(colour);
+        directionCueIncrementer -= 1; // Increment y-coordinate
+  
+        if(directionCueIncrementer < -350){
+          directionCueIncrementer = 0;
+        }
+      }
+      shape(directionCueShape);
     }
 
     void minigame_getHaplyData(){
