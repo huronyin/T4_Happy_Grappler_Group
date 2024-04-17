@@ -24,15 +24,9 @@ import java.lang.*;
 
 
 // device config
-//int hardwareVersion = 3;
-//String port1 = "COM4";
-//String port2 = "COM5";
-// int hardwareVersion = 3;
-// String port1 =  "COM5";
-// String port2 =  "COM6";
-int hardwareVersion = 2;
-String port1 =  Serial.list()[2];
-String port2 =  Serial.list()[3];
+String port1 =  "COM5";
+String port2 =  "COM6";
+int hardwareVersion = 3;
 
 
 /* scheduler definition ************************************************************************************************/ 
@@ -285,6 +279,7 @@ public class HaplyAvatar{
     /* Virtual avatar parameters */
     float             movementSpeed = 1.0e2;
     float             reactionMult = 2;
+    String            name;
 
     /* initializing virtual avatar variables */
     PImage            haplyAvatar;
@@ -343,9 +338,13 @@ public class HaplyAvatar{
         sh_avatar.setDensity(4);  
         if(id == 1){
           sh_avatar.setPosition(edgeTopLeftX+worldWidth/2.0, edgeTopLeftY+2*worldHeight/7.0); 
+          sh_avatar.setName("avatar1");
+          this.name = "avatar1";
         }
         else{
           sh_avatar.setPosition(edgeTopLeftX+worldWidth/2.0, edgeTopLeftY+2*worldHeight/5.0); 
+          sh_avatar.setName("avatar2");
+          this.name = "avatar2";
         }
         
         sh_avatar.setHaptic(true, 1000, 1);
@@ -413,7 +412,13 @@ public class HaplyAvatar{
           }
           
           // calculate collision reaction forces
-          fEE.add(contactList.get(i).getVelocityX() * reactionMult, -contactList.get(i).getVelocityY() * reactionMult);
+          if(contactList.get(i).getBody2().getName() == this.name){
+            fEE.add(contactList.get(i).getVelocityX() * reactionMult, -contactList.get(i).getVelocityY() * reactionMult);            
+          }
+          else{
+            fEE.add(-contactList.get(i).getVelocityX() * reactionMult, contactList.get(i).getVelocityY() * reactionMult);            
+          }
+
         }
         
         torques.set(widget.set_device_torques(fEE.array()));
